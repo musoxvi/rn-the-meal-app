@@ -1,15 +1,17 @@
-import React from 'react';
+import React, { useCallback, useEffect } from 'react';
+import { useSelector, useDispatch } from 'react-redux';
 import { View, Text, StyleSheet, Image } from 'react-native';
 import {
   NavigationStackScreenProps,
   NavigationStackScreenComponent,
 } from 'react-navigation-stack';
 import { HeaderButtons, Item } from 'react-navigation-header-buttons';
-// Data
-import { MEALS } from '../data/data';
 // Components
 import CustomHeaderButton from '../components/HeaderButton';
 import { ScrollView } from 'react-native-gesture-handler';
+// Redux
+import { InitialState } from '../store/models/types';
+import { toogleFavorite } from '../store/actions/meals';
 
 type Props = NavigationStackScreenProps;
 
@@ -18,7 +20,33 @@ const MealDetailContainer: React.FC<Props> & NavigationStackScreenComponent = ({
 }) => {
   const mealId = navigation.getParam('mealId');
 
-  const selectedMeal = MEALS.find((meal) => meal.id === mealId);
+  const availableMeals = useSelector(
+    (state: InitialState) => state.meals.meals,
+  );
+
+  const currentMealIsfavorite = useSelector((state: InitialState) =>
+    state.meals.favoriteMeals.some((meal) => meal.id === mealId),
+  );
+
+  const selectedMeal = availableMeals.find((meal) => meal.id === mealId);
+
+  const dispatch = useDispatch();
+
+  const toggleFavoriteHandler = useCallback(() => {
+    dispatch(toogleFavorite(mealId));
+  }, [dispatch, mealId]);
+
+  useEffect(() => {
+    navigation.setParams({
+      toggleFav: toggleFavoriteHandler,
+    });
+  }, [toggleFavoriteHandler]);
+
+  useEffect(() => {
+    navigation.setParams({
+      isFav: currentMealIsfavorite,
+    });
+  }, [currentMealIsfavorite]);
 
   return (
     <ScrollView>
@@ -30,14 +58,14 @@ const MealDetailContainer: React.FC<Props> & NavigationStackScreenComponent = ({
         <Text style={styles.text}>{selectedMeal?.affordability}</Text>
       </View>
       <Text style={styles.title}>Ingredients</Text>
-      {selectedMeal?.ingredients.map((ingredient) => (
-        <View style={styles.listItem}>
+      {selectedMeal?.ingredients.map((ingredient, i) => (
+        <View key={i} style={styles.listItem}>
           <Text>{ingredient}</Text>
         </View>
       ))}
       <Text style={styles.title}>Steps</Text>
-      {selectedMeal?.steps.map((step) => (
-        <View style={styles.listItem}>
+      {selectedMeal?.steps.map((step, i) => (
+        <View key={i} style={styles.listItem}>
           <Text>{step}</Text>
         </View>
       ))}
@@ -49,18 +77,18 @@ const MealDetailContainer: React.FC<Props> & NavigationStackScreenComponent = ({
 MealDetailContainer.navigationOptions = (
   navigationData: NavigationStackScreenProps,
 ) => {
-  const mealId = navigationData.navigation.getParam('mealId');
-
-  const selectedMeal = MEALS.find((meal) => meal.id === mealId);
+  const mealTitle = navigationData.navigation.getParam('mealTitle');
+  const toogleFavorite = navigationData.navigation.getParam('toggleFav');
+  const isFavorite = navigationData.navigation.getParam('isFav');
 
   return {
-    headerTitle: selectedMeal?.title,
+    headerTitle: mealTitle,
     headerRight: () => (
       <HeaderButtons HeaderButtonComponent={CustomHeaderButton}>
         <Item
           title="favorite"
-          iconName="grade"
-          onPress={() => console.log('mack favorite')}
+          iconName={isFavorite ? 'star' : 'star-border'}
+          onPress={toogleFavorite}
         />
       </HeaderButtons>
     ),

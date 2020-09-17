@@ -1,47 +1,36 @@
 import React from 'react';
-import { StyleSheet } from 'react-native';
+import { StyleSheet, View, Text } from 'react-native';
+import { useSelector } from 'react-redux';
 import {
   NavigationStackScreenProps,
   NavigationStackScreenComponent,
 } from 'react-navigation-stack';
-import { CATEGORIES, MEALS } from '../data/data';
-import Meal from '../models/meal';
-import MealItem from '../components/MealItem';
+import { CATEGORIES } from '../data/data';
 import MealList from '../components/MealList';
+// Models
+import { InitialState } from '../store/models/types';
 
 type Props = NavigationStackScreenProps;
 
 const CategoryMealsContainer: React.FC<Props> &
   NavigationStackScreenComponent = ({ navigation }) => {
-  /**
-   * renderMealItem
-   * @param itemData
-   */
-  const renderMealItem = (itemData: { item: Meal }) => {
-    return (
-      <MealItem
-        title={itemData.item.title}
-        duration={itemData.item.duration}
-        complexity={itemData.item.complexity.toLocaleUpperCase()}
-        affordability={itemData.item.affordability.toLocaleUpperCase()}
-        image={itemData.item.imageUrl}
-        onSelect={() => {
-          navigation.navigate({
-            routeName: 'MealDetail',
-            params: {
-              mealId: itemData.item.id,
-            },
-          });
-        }}
-      />
-    );
-  };
-
   const categoryId = navigation.getParam('categoryId');
 
-  const displayedMeals = MEALS.filter((meal) =>
+  const availableMeals = useSelector(
+    (state: InitialState) => state.meals.filteredMeals,
+  );
+
+  const displayedMeals = availableMeals.filter((meal) =>
     meal.categoryIds.includes(categoryId),
   );
+
+  if (!displayedMeals.length) {
+    return (
+      <View style={styles.content}>
+        <Text>No meals found, meybe check your filters?</Text>
+      </View>
+    );
+  }
 
   return <MealList listData={displayedMeals} navigation={navigation} />;
 };
@@ -59,7 +48,7 @@ CategoryMealsContainer.navigationOptions = (
 };
 
 const styles = StyleSheet.create({
-  screen: {
+  content: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',

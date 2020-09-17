@@ -1,24 +1,34 @@
 import React from 'react';
-import { StyleSheet } from 'react-native';
+import { useSelector } from 'react-redux';
+import { StyleSheet, View, Text } from 'react-native';
 import {
   NavigationStackScreenComponent,
   NavigationStackScreenProps,
 } from 'react-navigation-stack';
 import { HeaderButtons, Item } from 'react-navigation-header-buttons';
-import { MEALS } from '../data/data';
-import Meal from '../models/meal';
 // Components
 import MealList from '../components/MealList';
 import HeaderButton from '../components/HeaderButton';
+// Models
+import { InitialState } from '../store/models/types';
 
 type Props = NavigationStackScreenProps;
 
 const FavoritesContainer: React.FC<Props> & NavigationStackScreenComponent = ({
   navigation,
 }) => {
-  const favMeals = MEALS.filter(
-    (meal: Meal) => meal.id === 'm1' || meal.id === 'm2',
+  const favMeals = useSelector(
+    (state: InitialState) => state.meals.favoriteMeals,
   );
+
+  if (!favMeals || !favMeals.length) {
+    return (
+      <View style={styles.content}>
+        <Text>No favorite meals found. Start adding some!</Text>
+      </View>
+    );
+  }
+
   return <MealList listData={favMeals} navigation={navigation} />;
 };
 
@@ -43,7 +53,7 @@ FavoritesContainer.navigationOptions = (
 };
 
 const styles = StyleSheet.create({
-  screen: {
+  content: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
